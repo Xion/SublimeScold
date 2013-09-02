@@ -1,0 +1,6 @@
+*.*~
+*.py[co]
+
+# ST2 project files
+*.sublime-project
+*.sublime-workspace
