@@ -1,6 +1,14 @@
 """
 Main plugin module.
 """
+# Live dependency reloading shim -- see ``scold._reloader`` for details.
+RELOADER = 'scold._reloader'
+import imp, sys
+if RELOADER in sys.modules:
+    imp.reload(sys.modules[RELOADER])
+__import__(RELOADER)
+
+
 from sublime_plugin import TextCommand
 
 from scold import git
