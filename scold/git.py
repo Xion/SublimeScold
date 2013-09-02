@@ -1,14 +1,14 @@
 """
 Git support.
 """
-from itertools import izip
-
 from scold.util import shell
 
 
-BLAME_FIELDS = ('author', 'author-mail', 'author-time', 'author-tz',
-                'commiter', 'commiter-mail', 'committer-time', 'commiter-tz',
-                'summary', 'previous', 'filename')
+BLAME_FIELDS = (
+    'author', 'author-mail', 'author-time', 'author-tz',
+    'committer', 'committer-mail', 'committer-time', 'committer-tz',
+    'summary', 'previous', 'filename',
+)
 NO_AUTHOR_EMAIL = 'not.committed.yet'
 
 
@@ -18,25 +18,34 @@ def blame(filename, lines=None):
         flags['L'] = ','.join(map(str, lines))
 
     output = shell('git', 'blame', filename, line_porcelain=True, **flags)
-    output_lines = output.splitlines()
 
-    line_infos = []
-    i = 0
-    while i < len(output_lines):
-        line_desc = output_lines[i:i + len(BLAME_FIELDS) + 2]  # + hash + line
-        line_info = {
-            'hash': line_desc[0].split()[0],  # format: <hash> some numbers
-            'line': line_desc[-1] .lstrip('\t'),
-        }
-        for field, row in izip(BLAME_FIELDS, line_desc[1:-1]):
-            _, value = row.split(None, 1)
+    # Output consists of sections of rows, where each section
+    # corresponds to single line in the source file (``filename``).
+    #
+    # Section starts with commit hash, ends with source line itself (indented).
+    # In between, there are fields with values, separated by whitespace, e.g.::
+    #
+    #     author-mail coder@example.com
+    #     author-tz +0200
+
+    result = []
+    line_info = {}
+    for row in output.splitlines():
+        if row.startswith('\t' ):
+            line_info['line'] = row.lstrip('\t')
+            result.append(line_info)
+            line_info = {}
+            continue
+
+        head, tail = row.split(None, 1)
+        if head in BLAME_FIELDS:
+            field, value = head, tail
             if field == 'previous':
                 value = value.split()[0]  # format: <hash> <filename>
             elif field.endswith('-mail'):
-                value = value[1:-1]  # mails are in angle brackets; strip them
+                value = value[1:-1]  # strip angle brackets around email
             line_info[field] = value
+        else:
+            line_info['hash'] = head
 
-        line_infos.append(line_info)
-        i += len(line_desc)
-
-    return line_infos
+    return result
