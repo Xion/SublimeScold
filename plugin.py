@@ -9,6 +9,8 @@ if RELOADER in sys.modules:
 __import__(RELOADER)
 
 
+import os
+
 from sublime_plugin import TextCommand
 
 from scold import git
@@ -17,9 +19,19 @@ from scold.util import discrete_ranges
 
 
 MAIL_SUBJECT = "WTF?"
-MAIL_BODY = """Dear Sir or Madam,
+MAIL_BODY = """
+Dear Sir or Madam,
 
-WTF is this?!
+It came to my attention that in some unspecified time in the past,
+you have managed to produce at least some fragments of the following:
+
+{code}
+
+I must hereby inform you that this... thing, which you may think of as "code",
+is pretty much given to ellicit an emotional exclamation of bewilderment
+from anyone required to read it -- including yours truly.
+
+To put it other way, WTF is this?!
 
 Sincerely,
 Your Colleague
@@ -28,45 +40,69 @@ Your Colleague
 
 class Scold(TextCommand):
 
-    def run(self, edit):
-        authors = self._get_selection_authors()
-        if authors:
-            # TODO: include offending piece of code in the mail
-            recipients = '; '.join(authors)
-            mailto(recipients, subject=MAIL_SUBJECT, body=MAIL_BODY)
+    MAX_LINES_COUNT = 7
 
-    def _get_selection_authors(self):
-        """Return the email addresses of authors of the current selection,
-        as per the result of `git blame`.
+    def run(self, edit):
+        if not (self.view.file_name() and self.view.sel()):
+            return
+
+        numbered_lines = self._get_selected_lines()
+        authors = self._retrieve_authors(numbered_lines)
+        if not authors:
+            return
+
+        # TODO: get the sender's name & email from Git config
+        recipients = '; '.join(authors)
+        body = self._compose_mail_body(numbered_lines)
+        mailto(recipients, subject=MAIL_SUBJECT, body=body)
+
+    def _get_selected_lines(self):
+        """Get a list of numbers lines intersecting current selection.
+
+        :return: List of "numbered lines": (index, line) tuples,
+                 where ``index`` is 1-based index and ``line`` is a Region
+        """
+        numbered_lines = []
+
+        line_indices = set()  # to remove lines duplicated across regions
+        for region in self.view.sel():
+            lines = self.view.lines(region)
+            for line in lines:
+                index, _ = self.view.rowcol(line.begin())
+                if index not in line_indices:
+                    line_indices.add(index)
+                    numbered_lines.append((index + 1, line))
+
+        return numbered_lines
+
+    def _retrieve_authors(self, numbered_lines):
+        """Retrieve the authors of text/code lines in current view.
+        :param numbered_lines: List of "numbered lines"
+        :return: Set of email addresses
         """
         filename = self.view.file_name()
-        sel = self.view.sel()
-        if not (filename and sel):
-            return ()
-
-        line_numbers = self._get_line_numbers(self.view.sel())
-        line_ranges = discrete_ranges(line_numbers)
+        line_number_ranges = discrete_ranges(nr for (nr, _) in numbered_lines)
 
         authors = set()
-        for line_range in line_ranges:
+        for line_range in line_number_ranges:
             blamed_lines = git.blame(filename, lines=line_range)
             for line in blamed_lines:
                 author_email = line['author-mail']
                 if author_email != git.NO_AUTHOR_EMAIL:
                     authors.add(author_email)
+
         return authors
 
-    def _get_line_numbers(self, region_set):
-        """Get an line numbers for lines that overlap given RegionSet.
-        :param empty_lines: Whether empty lines should be included
-        :return: Set of 1-based line numbers
+    def _compose_mail_body(self, numbered_lines):
+        """Format the mail body that includes numbered lines from current view.
+        :param numbered_lines: List of "numbered lines"
+        :return: Mail body
         """
-        line_numbers = set()
+        lines = [self.view.substr(region) for (_, region) in numbered_lines]
 
-        for region in region_set:
-            lines = self.view.split_by_newlines(region)
-            for line in lines:
-                row_index, _ = self.view.rowcol(line.begin())
-                line_numbers.add(row_index + 1)
+        overdue = len(lines) - self.MAX_LINES_COUNT
+        if overdue > 0:
+            ellipsis_text = "... and %s more such lines" % overdue
+            lines[self.MAX_LINES_COUNT:] = [ellipsis_text]
 
-        return line_numbers
+        return MAIL_BODY.strip().format(code=os.linesep.join(lines))
