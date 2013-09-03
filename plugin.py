@@ -12,16 +12,33 @@ __import__(RELOADER)
 from sublime_plugin import TextCommand
 
 from scold import git
+from scold.system import mailto
 from scold.util import discrete_ranges
+
+
+MAIL_SUBJECT = "WTF?"
+MAIL_BODY = """Dear Sir or Madam,
+
+WTF is this?!
+
+Sincerely,
+Your Colleague
+"""
 
 
 class Scold(TextCommand):
 
     def run(self, edit):
-        # TODO: format & send mail to those poor folks
-        print self._get_selection_authors()
+        authors = self._get_selection_authors()
+        if authors:
+            # TODO: include offending piece of code in the mail
+            recipients = '; '.join(authors)
+            mailto(recipients, subject=MAIL_SUBJECT, body=MAIL_BODY)
 
     def _get_selection_authors(self):
+        """Return the email addresses of authors of the current selection,
+        as per the result of `git blame`.
+        """
         filename = self.view.file_name()
         sel = self.view.sel()
         if not (filename and sel):
