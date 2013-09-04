@@ -1,7 +1,9 @@
 """
 Dependency reloader.
 
-TODO: explain this
+This is needed because ST only tracks changes in the main module of each plugin,
+so any additional ones (here, inside ``scold`` package) have to be reloaded
+manually if changes are to be registered without restarting the editor.
 
 Based on ideas from:
 https://github.com/wbond/sublime_package_control/blob/master/package_control/reloader.py

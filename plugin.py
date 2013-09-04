@@ -19,6 +19,7 @@ from scold.system import mailto
 from scold.util import discrete_ranges
 
 
+# TODO: allow to adjust these through plugin-specific settings
 MAIL_SUBJECT = "WTF?"
 MAIL_BODY = """
 Dear Sir or Madam,
@@ -51,6 +52,8 @@ class Scold(TextCommand):
         numbered_lines = self._get_selected_lines()
         authors = self._retrieve_authors(numbered_lines)
         if not authors:
+            # TODO: distinguish different error cases:
+            # no repository; untracked file; uncomitted change
             error_message("Can't find the author(s) of this fragment.")
             return
 

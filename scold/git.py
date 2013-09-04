@@ -13,6 +13,12 @@ NO_AUTHOR_EMAIL = 'not.committed.yet'
 
 
 def blame(filename, lines=None):
+    """Obtain results of ``git blame`` for given file,
+    optionally limited to specified range of lines.
+
+    :param lines: Tuple of (start, end) line numbers
+    :return: List of blame data for each line
+    """
     flags = {}
     if lines is not None:
         flags['L'] = ','.join(map(str, lines))
