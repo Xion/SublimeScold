@@ -4,11 +4,11 @@ Git support.
 from scold.util import shell
 
 
-BLAME_FIELDS = (
+BLAME_FIELDS = [
     'author', 'author-mail', 'author-time', 'author-tz',
     'committer', 'committer-mail', 'committer-time', 'committer-tz',
     'summary', 'previous', 'filename',
-)
+]
 NO_AUTHOR_EMAIL = 'not.committed.yet'
 
 

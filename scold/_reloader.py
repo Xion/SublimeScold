@@ -12,11 +12,11 @@ import sys
 
 # Modules the plugin is comprised of, sorted topotologically
 # according to their import-time dependencies.
-MODULES_LOAD_ORDER = (
+MODULES_LOAD_ORDER = [
     'scold.system',
     'scold.util',
     'scold.git',
-)
+]
 
 
 reload_modules = []

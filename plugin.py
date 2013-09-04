@@ -11,6 +11,7 @@ __import__(RELOADER)
 
 import os
 
+from sublime import error_message, message_dialog
 from sublime_plugin import TextCommand
 
 from scold import git
@@ -43,12 +44,14 @@ class Scold(TextCommand):
     MAX_LINES_COUNT = 7
 
     def run(self, edit):
-        if not (self.view.file_name() and self.view.sel()):
+        if not self.view.file_name():
+            message_dialog("Actually, it's you who wrote that...")
             return
 
         numbered_lines = self._get_selected_lines()
         authors = self._retrieve_authors(numbered_lines)
         if not authors:
+            error_message("Can't find the author(s) of this fragment.")
             return
 
         # TODO: get the sender's name & email from Git config

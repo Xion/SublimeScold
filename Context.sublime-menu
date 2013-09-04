@@ -1,0 +1,4 @@
+[
+    { "caption": "-", "id": "sublime_scold" },
+    { "caption": "Scold...", "command": "scold" }
+]
