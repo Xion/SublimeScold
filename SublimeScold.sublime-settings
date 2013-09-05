@@ -26,5 +26,9 @@
         "",
         "Sincerely,",
         "Your Colleague"
-    ]
+    ],
+
+    // Maximum number of lines of code to include in the email.
+    // (as {code} placeholder in "body_template")
+    "max_lines_count": 7
 }

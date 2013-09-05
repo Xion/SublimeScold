@@ -21,8 +21,6 @@ from scold.util import discrete_ranges
 
 class Scold(TextCommand):
 
-    MAX_LINES_COUNT = 7
-
     def __init__(self, *args, **kwargs):
         super(Scold, self).__init__(*args, **kwargs)
         self._settings = load_settings('SublimeScold.sublime-settings')
@@ -63,6 +61,8 @@ class Scold(TextCommand):
                     line_indices.add(index)
                     numbered_lines.append((index + 1, line))
 
+        # TODO: remove empty or whitespace-only lines
+        # at the beginning and end of selection
         return numbered_lines
 
     def _retrieve_authors(self, numbered_lines):
@@ -105,10 +105,10 @@ class Scold(TextCommand):
             return ""
 
         lines = [self.view.substr(region) for (_, region) in numbered_lines]
-        overdue = len(lines) - self.MAX_LINES_COUNT
+        overdue = len(lines) - self._max_lines_count
         if overdue > 0:
             ellipsis_text = "... and %s more such lines" % overdue
-            lines[self.MAX_LINES_COUNT:] = [ellipsis_text]
+            lines[self._max_lines_count:] = [ellipsis_text]
 
         return template.strip().format(code=os.linesep.join(lines))
 
@@ -118,3 +118,7 @@ class Scold(TextCommand):
         if isinstance(template, list):
             template = os.linesep.join(template)
         return template
+
+    @property
+    def _max_lines_count(self):
+        return self._settings.get('max_lines_count') or 10
