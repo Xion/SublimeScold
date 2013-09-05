@@ -1,0 +1,30 @@
+{
+    // Text of the email subject.
+    //
+    // The following format symbols can be used here:
+    // - first_line - first line of the piece of code that user has selected
+    "subject_template": "WTF?",
+
+    // Text of the email body.
+    //
+    // It can be either a string or array of strings (lines).
+    // Additionally, the following format symbols can be used:
+    // - code - piece of code that the user has selected
+    "body_template": [
+        "Dear Sir or Madam,",
+        "",
+        "It came to my attention that in some unspecified time in the past,",
+        "you have managed to produce at least some fragments of the following:",
+        "",
+        "{code}",
+        "",
+        "I must hereby inform you that this... thing, which you may think of as \"code\",",
+        "is pretty much given to ellicit an emotional exclamation of bewilderment",
+        "from anyone required to read it -- including yours truly.",
+        "",
+        "To put it other way, WTF is this?!",
+        "",
+        "Sincerely,",
+        "Your Colleague"
+    ]
+}

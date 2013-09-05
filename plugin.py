@@ -11,7 +11,7 @@ __import__(RELOADER)
 
 import os
 
-from sublime import error_message, message_dialog
+from sublime import error_message, load_settings, message_dialog
 from sublime_plugin import TextCommand
 
 from scold import git
@@ -19,30 +19,13 @@ from scold.system import mailto
 from scold.util import discrete_ranges
 
 
-# TODO: allow to adjust these through plugin-specific settings
-MAIL_SUBJECT = "WTF?"
-MAIL_BODY = """
-Dear Sir or Madam,
-
-It came to my attention that in some unspecified time in the past,
-you have managed to produce at least some fragments of the following:
-
-{code}
-
-I must hereby inform you that this... thing, which you may think of as "code",
-is pretty much given to ellicit an emotional exclamation of bewilderment
-from anyone required to read it -- including yours truly.
-
-To put it other way, WTF is this?!
-
-Sincerely,
-Your Colleague
-"""
-
-
 class Scold(TextCommand):
 
     MAX_LINES_COUNT = 7
+
+    def __init__(self, *args, **kwargs):
+        super(Scold, self).__init__(*args, **kwargs)
+        self._settings = load_settings('SublimeScold.sublime-settings')
 
     def run(self, edit):
         if not self.view.file_name():
@@ -59,8 +42,9 @@ class Scold(TextCommand):
 
         # TODO: get the sender's name & email from Git config
         recipients = '; '.join(authors)
+        subject = self._format_mail_subject(numbered_lines)
         body = self._compose_mail_body(numbered_lines)
-        mailto(recipients, subject=MAIL_SUBJECT, body=body)
+        mailto(recipients, subject=subject, body=body)
 
     def _get_selected_lines(self):
         """Get a list of numbers lines intersecting current selection.
@@ -99,16 +83,38 @@ class Scold(TextCommand):
 
         return authors
 
+    def _format_mail_subject(self, numbered_lines):
+        """Format the mail subject.
+        :param numbered_lines: List of "numbered lines"
+        :return: Mail subject
+        """
+        template = self._get_template('subject')
+        if not template:
+            return ""
+
+        _, first_line = numbered_lines[0]
+        return template.strip().format(line=first_line)
+
     def _compose_mail_body(self, numbered_lines):
         """Format the mail body that includes numbered lines from current view.
         :param numbered_lines: List of "numbered lines"
         :return: Mail body
         """
-        lines = [self.view.substr(region) for (_, region) in numbered_lines]
+        template = self._get_template('body')
+        if not template:
+            return ""
 
+        lines = [self.view.substr(region) for (_, region) in numbered_lines]
         overdue = len(lines) - self.MAX_LINES_COUNT
         if overdue > 0:
             ellipsis_text = "... and %s more such lines" % overdue
             lines[self.MAX_LINES_COUNT:] = [ellipsis_text]
 
-        return MAIL_BODY.strip().format(code=os.linesep.join(lines))
+        return template.strip().format(code=os.linesep.join(lines))
+
+    def _get_template(self, kind):
+        """Retrieve email subject or body template from settings."""
+        template = self._settings.get('%s_template' % kind)
+        if isinstance(template, list):
+            template = os.linesep.join(template)
+        return template
