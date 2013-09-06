@@ -27,6 +27,8 @@ class Scold(TextCommand):
 
     def run(self, edit):
         if not self.view.file_name():
+            # TODO: detect the case where user (from `git config`) is also
+            # the only author of the code (s)he wanted to critique
             message_dialog("Actually, it's you who wrote that...")
             return
 
