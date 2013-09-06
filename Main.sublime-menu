@@ -12,20 +12,20 @@
                 "children":
                 [
                     {
-                        "caption": "SublimeScold",
+                        "caption": "Scold",
                         "children":
                         [
                             {
                                 "command": "open_file", "args":
                                 {
-                                    "file": "${packages}/SublimeScold/SublimeScold.sublime-settings"
+                                    "file": "${packages}/Scold/Scold.sublime-settings"
                                 },
                                 "caption": "Settings – Default"
                             },
                             {
                                 "command": "open_file", "args":
                                 {
-                                    "file": "${packages}/User/SublimeScold.sublime-settings"
+                                    "file": "${packages}/User/Scold.sublime-settings"
                                 },
                                 "caption": "Settings – User"
                             }

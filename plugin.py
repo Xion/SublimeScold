@@ -23,7 +23,7 @@ class Scold(TextCommand):
 
     def __init__(self, *args, **kwargs):
         super(Scold, self).__init__(*args, **kwargs)
-        self._settings = load_settings('SublimeScold.sublime-settings')
+        self._settings = load_settings('Scold.sublime-settings')
 
     def run(self, edit):
         if not self.view.file_name():
